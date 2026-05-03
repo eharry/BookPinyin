@@ -100,6 +100,26 @@ def process_html_files_in_dir(temp_dir):
             content = f.read()
 
         processed_content = process_html_content(content)
+        
+        # 添加 ruby 样式
+        if '</head>' in processed_content:
+            ruby_style = '''
+<style type="text/css">
+ruby {
+    display: inline-block;
+    text-align: center;
+    vertical-align: text-top;
+    margin-bottom: 0.3em;
+}
+rt {
+    display: block;
+    font-size: 60%;
+    line-height: 1.2;
+    ruby-position: over;
+}
+</style>
+</head>'''
+            processed_content = processed_content.replace('</head>', ruby_style)
 
         with open(html_file, 'w', encoding='utf-8') as f:
             f.write(processed_content)
