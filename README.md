@@ -67,6 +67,14 @@ python book_pinyin.py input.epub /path/to/output.epub
 <ruby>汉字<rt>pinyin</rt></ruby>
 ```
 
+## 关键第三方库
+
+本项目依赖以下优秀的开源项目，在此表示感谢：
+
+- [pypinyin](https://github.com/mozillazg/python-pinyin) - 汉字转拼音的 Python 库
+- [lxml](https://lxml.de/) - 功能强大的 XML 和 HTML 处理库
+- [mobi](https://github.com/iscc/mobi) - mobi 文件提取和处理库
+
 ## 注意事项
 
 - 目前仅支持中文文本的拼音标注
@@ -82,6 +90,10 @@ python book_pinyin.py input.epub /path/to/output.epub
 ├── requirements.txt   # 依赖库列表
 └── test_pinyin.py     # 测试脚本（可选）
 ```
+
+## 致谢
+
+感谢所有开源库的作者及其贡献者们！
 
 ## 许可证
 
