@@ -97,8 +97,6 @@ def update_metadata(temp_dir):
     with open(opf_file, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    # 查找并修改 dc:title 标签内容
-    # 处理简单格式：<dc:title>书名</dc:title>
     def replace_title(match):
         tag_start = match.group(1)
         title = match.group(2)
@@ -108,7 +106,6 @@ def update_metadata(temp_dir):
             return f'{tag_start}{new_title}{tag_end}'
         return match.group(0)
 
-    # 匹配多种可能的 dc:title 格式
     content = re.sub(r'(<dc:title[^>]*>)(.*?)(</dc:title>)', replace_title, content, flags=re.DOTALL)
     content = re.sub(r'(<title[^>]*>)(.*?)(</title>)', replace_title, content, flags=re.DOTALL)
 
@@ -117,13 +114,40 @@ def update_metadata(temp_dir):
 
 
 def repack_epub(temp_dir, output_path):
-    """重新打包成 epub 文件"""
-    with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zf:
-        for root, dirs, files in os.walk(temp_dir):
-            for file in files:
-                file_path = Path(root) / file
-                arcname = file_path.relative_to(temp_dir)
-                zf.write(file_path, arcname)
+    """重新打包成 epub 文件，严格遵守 epub 规范"""
+    # epub 规范要求：
+    # 1. mimetype 文件必须不压缩，且必须是第一个文件
+    # 2. 文件按特定顺序打包
+
+    # 收集所有文件
+    all_files = []
+    for root, dirs, files in os.walk(temp_dir):
+        for file in files:
+            file_path = Path(root) / file
+            arcname = str(file_path.relative_to(temp_dir))
+            all_files.append((file_path, arcname))
+
+    # 按 epub 规范排序：mimetype > META-INF > 其他文件
+    def sort_key(item):
+        arcname = item[1]
+        if arcname == 'mimetype':
+            return (0, arcname)
+        elif arcname.startswith('META-INF/'):
+            return (1, arcname)
+        else:
+            return (2, arcname)
+
+    all_files.sort(key=sort_key)
+
+    # 创建新的 epub 文件
+    with zipfile.ZipFile(output_path, 'w') as zf:
+        for file_path, arcname in all_files:
+            if arcname == 'mimetype':
+                # mimetype 必须不压缩
+                zf.write(file_path, arcname, compress_type=zipfile.ZIP_STORED)
+            else:
+                # 其他文件使用 deflate 压缩
+                zf.write(file_path, arcname, compress_type=zipfile.ZIP_DEFLATED)
 
 
 def process_epub(input_path, output_path=None):
