@@ -54,7 +54,6 @@ def process_html_content(html_content):
 
     while i < n:
         if html_content[i] == '<':
-            # 处理标签
             tag_start = i
             end = html_content.find('>', i)
             if end == -1:
@@ -63,21 +62,17 @@ def process_html_content(html_content):
             tag_str = html_content[i:end+1]
             result.append(tag_str)
 
-            # 检查标签类型
             if not current_skip:
-                # 检查是否进入了需要跳过的标签
                 tag_name = tag_str.strip('<>/').split()[0].lower()
                 if tag_name in skip_tags:
                     current_skip = tag_name
             else:
-                # 检查是否离开当前跳过的标签
                 tag_name = tag_str.strip('<>/').split()[0].lower()
                 if tag_name == current_skip:
                     current_skip = False
 
             i = end + 1
         else:
-            # 处理文本
             start = i
             while i < n and html_content[i] != '<':
                 i += 1
@@ -101,13 +96,11 @@ def process_html_files_in_dir(temp_dir):
 
         processed_content = process_html_content(content)
 
-        # 添加 ruby 样式 - 简洁版本，依赖浏览器默认ruby处理
+        # 极简样式：只设置rt字体大小，不添加复杂样式
         if '</head>' in processed_content:
             ruby_style = '''
 <style type="text/css">
-rt {
-    font-size: 50%;
-}
+rt { font-size: 50%; }
 </style>
 </head>'''
             processed_content = processed_content.replace('</head>', ruby_style)
@@ -148,11 +141,6 @@ def update_metadata(temp_dir):
 
 def repack_epub(temp_dir, output_path):
     """重新打包成 epub 文件，严格遵守 epub 规范"""
-    # epub 规范要求：
-    # 1. mimetype 文件必须不压缩，且必须是第一个文件
-    # 2. 文件按特定顺序打包
-
-    # 收集所有文件
     all_files = []
     for root, dirs, files in os.walk(temp_dir):
         for file in files:
@@ -160,7 +148,6 @@ def repack_epub(temp_dir, output_path):
             arcname = str(file_path.relative_to(temp_dir))
             all_files.append((file_path, arcname))
 
-    # 按 epub 规范排序：mimetype > META-INF > 其他文件
     def sort_key(item):
         arcname = item[1]
         if arcname == 'mimetype':
@@ -172,14 +159,11 @@ def repack_epub(temp_dir, output_path):
 
     all_files.sort(key=sort_key)
 
-    # 创建新的 epub 文件
     with zipfile.ZipFile(output_path, 'w') as zf:
         for file_path, arcname in all_files:
             if arcname == 'mimetype':
-                # mimetype 必须不压缩
                 zf.write(file_path, arcname, compress_type=zipfile.ZIP_STORED)
             else:
-                # 其他文件使用 deflate 压缩
                 zf.write(file_path, arcname, compress_type=zipfile.ZIP_DEFLATED)
 
 
