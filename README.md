@@ -89,7 +89,6 @@ python book_pinyin.py input.epub /path/to/output.epub
 
 - **KOReader**：可以正常显示拼音，但打开书籍时可能会有些慢（因为添加了拼音标签和样式）
 - **Send to Kindle**：通过 Send to Kindle 推送可能会失败（原因尚不明确，可能与文件大小或结构有关）
-- **Kindle 原生系统**：未测试，可能不支持 HTML `<ruby>` 标签
 
 ## Kindle 使用建议
 
