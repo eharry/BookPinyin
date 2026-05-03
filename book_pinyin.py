@@ -1,0 +1,181 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Book 拼音添加工具
+为 epub/mobi 文件中的中文文本添加拼音注音
+支持 epub 和 mobi 格式
+"""
+
+import os
+import sys
+import zipfile
+import shutil
+from pathlib import Path
+from pypinyin import pinyin, Style
+
+
+def is_chinese_char(char):
+    """判断是否是中文字符"""
+    return '\u4e00' <= char <= '\u9fff'
+
+
+def add_pinyin_to_text(text):
+    """为文本中的汉字添加拼音注音"""
+    result = []
+    i = 0
+    n = len(text)
+
+    while i < n:
+        if is_chinese_char(text[i]):
+            chinese_chars = []
+            while i < n and is_chinese_char(text[i]):
+                chinese_chars.append(text[i])
+                i += 1
+
+            pinyin_list = pinyin(''.join(chinese_chars), style=Style.TONE)
+
+            for char, py in zip(chinese_chars, pinyin_list):
+                result.append(f'<ruby>{char}<rt>{py[0]}</rt></ruby>')
+        else:
+            result.append(text[i])
+            i += 1
+
+    return ''.join(result)
+
+
+def process_html_content(html_content):
+    """处理 HTML 内容，为其中的文本添加拼音"""
+    result = []
+    i = 0
+    n = len(html_content)
+
+    while i < n:
+        if html_content[i] == '<':
+            end = html_content.find('>', i)
+            if end == -1:
+                result.append(html_content[i:])
+                break
+            result.append(html_content[i:end+1])
+            i = end + 1
+        else:
+            start = i
+            while i < n and html_content[i] != '<':
+                i += 1
+            text = html_content[start:i]
+            result.append(add_pinyin_to_text(text))
+
+    return ''.join(result)
+
+
+def process_html_files_in_dir(temp_dir):
+    """处理目录中的所有 HTML 文件"""
+    html_files = list(temp_dir.rglob('*.html')) + list(temp_dir.rglob('*.xhtml'))
+
+    for html_file in html_files:
+        print(f"处理文件: {html_file}")
+        with open(html_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        processed_content = process_html_content(content)
+
+        with open(html_file, 'w', encoding='utf-8') as f:
+            f.write(processed_content)
+
+
+def repack_epub(temp_dir, output_path):
+    """重新打包成 epub 文件"""
+    with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for root, dirs, files in os.walk(temp_dir):
+            for file in files:
+                file_path = Path(root) / file
+                arcname = file_path.relative_to(temp_dir)
+                zf.write(file_path, arcname)
+
+
+def process_epub(input_path, output_path=None):
+    """处理 epub 文件"""
+    if output_path is None:
+        input_path_obj = Path(input_path)
+        output_path = input_path_obj.parent / f"{input_path_obj.stem}—注音版{input_path_obj.suffix}"
+
+    temp_dir = Path("temp_epub")
+    temp_dir.mkdir(exist_ok=True)
+
+    try:
+        with zipfile.ZipFile(input_path, 'r') as zf:
+            zf.extractall(temp_dir)
+
+        process_html_files_in_dir(temp_dir)
+        repack_epub(temp_dir, output_path)
+
+        print(f"\n处理完成！输出文件: {output_path}")
+        return output_path
+
+    finally:
+        if temp_dir.exists():
+            shutil.rmtree(temp_dir)
+
+
+def process_mobi(input_path, output_path=None):
+    """处理 mobi 文件"""
+    import mobi
+
+    if output_path is None:
+        input_path_obj = Path(input_path)
+        output_path = input_path_obj.parent / f"{input_path_obj.stem}—注音版.epub"
+
+    temp_dir = Path("temp_mobi")
+    temp_dir.mkdir(exist_ok=True)
+
+    try:
+        print("正在提取 mobi 文件...")
+        mobi_temp_dir, extracted_file = mobi.extract(input_path)
+
+        shutil.move(mobi_temp_dir, temp_dir)
+
+        if extracted_file and Path(extracted_file).exists():
+            ext = Path(extracted_file).suffix.lower()
+            if ext == '.epub':
+                epub_dir = temp_dir / "epub_content"
+                epub_dir.mkdir(exist_ok=True)
+                with zipfile.ZipFile(extracted_file, 'r') as zf:
+                    zf.extractall(epub_dir)
+                temp_dir = epub_dir
+
+        process_html_files_in_dir(temp_dir)
+        repack_epub(temp_dir, output_path)
+
+        print(f"\n处理完成！输出文件: {output_path}")
+        return output_path
+
+    finally:
+        if temp_dir.exists():
+            shutil.rmtree(temp_dir)
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("使用方法: python book_pinyin.py <文件路径> [输出文件路径]")
+        print("支持的格式: .epub, .mobi")
+        sys.exit(1)
+
+    input_path = sys.argv[1]
+    output_path = sys.argv[2] if len(sys.argv) > 2 else None
+
+    if not os.path.exists(input_path):
+        print(f"错误: 文件不存在 - {input_path}")
+        sys.exit(1)
+
+    ext = Path(input_path).suffix.lower()
+
+    if ext == '.epub':
+        process_epub(input_path, output_path)
+    elif ext == '.mobi':
+        process_mobi(input_path, output_path)
+    else:
+        print(f"错误: 不支持的文件格式 {ext}，仅支持 .epub 和 .mobi")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
