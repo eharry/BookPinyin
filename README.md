@@ -91,6 +91,21 @@ python book_pinyin.py input.epub /path/to/output.epub
 - **Send to Kindle**：通过 Send to Kindle 推送可能会失败（原因尚不明确，可能与文件大小或结构有关）
 - **Kindle 原生系统**：未测试，可能不支持 HTML `<ruby>` 标签
 
+## Kindle 使用建议
+
+**如果想要在 Kindle 设备上使用转换后的注音版电子书：**
+
+由于 KOReader 对拼音标注（`<ruby>` 标签）支持不好，可能导致显示不正常。**推荐解决方案：**
+
+> **使用 Calibre 将转换后的 epub 文件转换为 mobi 格式，然后复制到 Kindle 设备上，使用 Kindle 原生系统打开。Kindle 原生系统可以更好地打开文件并展示拼音。**
+
+具体步骤：
+1. 使用本工具将原始电子书转换为带拼音的 epub 文件
+2. 打开 Calibre，添加转换后的 epub 文件
+3. 右键点击书籍，选择"转换书籍"→"转换为 MOBI"
+4. 将转换后的 mobi 文件通过 USB 复制到 Kindle 设备
+5. 使用 Kindle 原生系统打开阅读
+
 ## 项目结构
 
 ```
