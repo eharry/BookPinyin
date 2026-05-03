@@ -101,23 +101,12 @@ def process_html_files_in_dir(temp_dir):
 
         processed_content = process_html_content(content)
 
-        # 添加 ruby 样式 - 使用绝对定位强制让拼音在上方
+        # 添加 ruby 样式 - 简洁版本，依赖浏览器默认ruby处理
         if '</head>' in processed_content:
             ruby_style = '''
 <style type="text/css">
-ruby {
-    display: inline;
-    position: relative;
-    text-align: center;
-}
 rt {
-    position: absolute;
-    top: -0.8em;
-    left: 0;
     font-size: 50%;
-    line-height: 1.2;
-    text-align: center;
-    width: 100%;
 }
 </style>
 </head>'''
