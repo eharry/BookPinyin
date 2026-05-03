@@ -83,6 +83,13 @@ python book_pinyin.py input.epub /path/to/output.epub
 - 目前仅支持中文文本的拼音标注
 - 不处理 DRM 加密的电子书
 - 建议先备份原文件
+- 转换后的 epub 文件会添加 CSS 样式以确保拼音正确显示
+
+## 已知问题
+
+- **KOReader**：可以正常显示拼音，但打开书籍时可能会有些慢（因为添加了拼音标签和样式）
+- **Send to Kindle**：通过 Send to Kindle 推送可能会失败（原因尚不明确，可能与文件大小或结构有关）
+- **Kindle 原生系统**：未测试，可能不支持 HTML `<ruby>` 标签
 
 ## 项目结构
 
