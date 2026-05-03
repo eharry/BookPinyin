@@ -101,21 +101,20 @@ def process_html_files_in_dir(temp_dir):
 
         processed_content = process_html_content(content)
         
-        # 添加 ruby 样式
+        # 添加 ruby 样式 - 确保拼音在汉字上面
         if '</head>' in processed_content:
             ruby_style = '''
 <style type="text/css">
 ruby {
-    display: inline-block;
+    ruby-position: over;
     text-align: center;
-    vertical-align: text-top;
-    margin-bottom: 0.3em;
+    text-rendering: optimizeLegibility;
 }
 rt {
-    display: block;
-    font-size: 60%;
-    line-height: 1.2;
+    font-size: 55%;
+    line-height: 1.1;
     ruby-position: over;
+    ruby-align: center;
 }
 </style>
 </head>'''
