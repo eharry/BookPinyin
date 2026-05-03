@@ -62,7 +62,7 @@ def process_html_content(html_content):
                 break
             tag_str = html_content[i:end+1]
             result.append(tag_str)
-            
+
             # 检查标签类型
             if not current_skip:
                 # 检查是否进入了需要跳过的标签
@@ -74,7 +74,7 @@ def process_html_content(html_content):
                 tag_name = tag_str.strip('<>/').split()[0].lower()
                 if tag_name == current_skip:
                     current_skip = False
-                    
+
             i = end + 1
         else:
             # 处理文本
@@ -100,21 +100,22 @@ def process_html_files_in_dir(temp_dir):
             content = f.read()
 
         processed_content = process_html_content(content)
-        
-        # 添加 ruby 样式 - 确保拼音在汉字上面
+
+        # 添加 ruby 样式 - display:block + ruby-position:over 混合方式
         if '</head>' in processed_content:
             ruby_style = '''
 <style type="text/css">
 ruby {
-    ruby-position: over;
+    display: inline-block;
     text-align: center;
-    text-rendering: optimizeLegibility;
+    vertical-align: text-top;
 }
 rt {
-    font-size: 55%;
+    display: block;
+    font-size: 60%;
     line-height: 1.1;
     ruby-position: over;
-    ruby-align: center;
+    margin-bottom: -0.2em;
 }
 </style>
 </head>'''
