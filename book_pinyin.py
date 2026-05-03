@@ -45,25 +45,47 @@ def add_pinyin_to_text(text):
 
 
 def process_html_content(html_content):
-    """处理 HTML 内容，为其中的文本添加拼音"""
+    """处理 HTML 内容，只在正文文本中添加拼音，跳过特定标签"""
     result = []
     i = 0
     n = len(html_content)
+    skip_tags = {'title', 'script', 'style', 'head'}
+    current_skip = False
 
     while i < n:
         if html_content[i] == '<':
+            # 处理标签
+            tag_start = i
             end = html_content.find('>', i)
             if end == -1:
                 result.append(html_content[i:])
                 break
-            result.append(html_content[i:end+1])
+            tag_str = html_content[i:end+1]
+            result.append(tag_str)
+            
+            # 检查标签类型
+            if not current_skip:
+                # 检查是否进入了需要跳过的标签
+                tag_name = tag_str.strip('<>/').split()[0].lower()
+                if tag_name in skip_tags:
+                    current_skip = tag_name
+            else:
+                # 检查是否离开当前跳过的标签
+                tag_name = tag_str.strip('<>/').split()[0].lower()
+                if tag_name == current_skip:
+                    current_skip = False
+                    
             i = end + 1
         else:
+            # 处理文本
             start = i
             while i < n and html_content[i] != '<':
                 i += 1
             text = html_content[start:i]
-            result.append(add_pinyin_to_text(text))
+            if not current_skip:
+                result.append(add_pinyin_to_text(text))
+            else:
+                result.append(text)
 
     return ''.join(result)
 
