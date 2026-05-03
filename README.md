@@ -93,7 +93,8 @@ python book_pinyin.py input.epub /path/to/output.epub
 
 ## 致谢
 
-感谢所有开源库的作者及其贡献者们！
+- 感谢所有开源库的作者及其贡献者们！
+- 特别感谢 [Trae AI](https://trae.ai/) 提供免费的 AI 功能，使本项目得以开发完成！
 
 ## 许可证
 
