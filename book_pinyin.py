@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Book 拼音添加工具
+Book Pinyin - 电子书拼音加注工具
 为 epub/mobi 文件中的中文文本添加拼音注音
 支持 epub 和 mobi 格式
 """
@@ -10,6 +10,7 @@ import os
 import sys
 import zipfile
 import shutil
+import re
 from pathlib import Path
 from pypinyin import pinyin, Style
 
@@ -82,6 +83,39 @@ def process_html_files_in_dir(temp_dir):
             f.write(processed_content)
 
 
+def update_metadata(temp_dir):
+    """更新 epub 文件的元数据，在书名后添加'—注音版'"""
+    opf_files = list(temp_dir.rglob('content.opf')) + list(temp_dir.rglob('*.opf'))
+
+    if not opf_files:
+        print("警告: 未找到 metadata 文件")
+        return
+
+    opf_file = opf_files[0]
+    print(f"更新元数据: {opf_file}")
+
+    with open(opf_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    # 查找并修改 dc:title 标签内容
+    # 处理简单格式：<dc:title>书名</dc:title>
+    def replace_title(match):
+        tag_start = match.group(1)
+        title = match.group(2)
+        tag_end = match.group(3)
+        if '—注音版' not in title:
+            new_title = title + '—注音版'
+            return f'{tag_start}{new_title}{tag_end}'
+        return match.group(0)
+
+    # 匹配多种可能的 dc:title 格式
+    content = re.sub(r'(<dc:title[^>]*>)(.*?)(</dc:title>)', replace_title, content, flags=re.DOTALL)
+    content = re.sub(r'(<title[^>]*>)(.*?)(</title>)', replace_title, content, flags=re.DOTALL)
+
+    with open(opf_file, 'w', encoding='utf-8') as f:
+        f.write(content)
+
+
 def repack_epub(temp_dir, output_path):
     """重新打包成 epub 文件"""
     with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zf:
@@ -106,6 +140,7 @@ def process_epub(input_path, output_path=None):
             zf.extractall(temp_dir)
 
         process_html_files_in_dir(temp_dir)
+        update_metadata(temp_dir)
         repack_epub(temp_dir, output_path)
 
         print(f"\n处理完成！输出文件: {output_path}")
@@ -143,6 +178,7 @@ def process_mobi(input_path, output_path=None):
                 temp_dir = epub_dir
 
         process_html_files_in_dir(temp_dir)
+        update_metadata(temp_dir)
         repack_epub(temp_dir, output_path)
 
         print(f"\n处理完成！输出文件: {output_path}")
